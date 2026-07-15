@@ -1,6 +1,7 @@
 {
   "name": "basebox",
   "description": "Manage Basebox resources — organizations, projects, profiles, API keys, deployments, payments, payout accounts, file storage, and auth sessions.",
+  "run": ["bun", "run", "./tool.ts"],
   "inputSchema": {
     "type": "object",
     "properties": {
