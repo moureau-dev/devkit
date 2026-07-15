@@ -1,0 +1,45 @@
+{
+  "name": "basebox",
+  "description": "Manage Basebox resources.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "resource": {
+        "type": "string",
+        "enum": [
+          "organization",
+          "project",
+          "deployment",
+          "apikey",
+          "file"
+        ]
+      },
+      "operation": {
+        "type": "string",
+        "enum": [
+          "list",
+          "get",
+          "create",
+          "update",
+          "delete",
+          "select",
+          "deploy",
+          "logs"
+        ]
+      },
+      "organization": {
+        "type": "string"
+      },
+      "project": {
+        "type": "string"
+      },
+      "data": {
+        "type": "object"
+      }
+    },
+    "required": [
+      "resource",
+      "operation"
+    ]
+  }
+}
