@@ -1,41 +1,49 @@
-import { Api } from "./api";
-import { ApiKeyLevel } from "@moureau/basebox";
-
-const api = new Api();
+import { api } from "./api";
 
 export async function organization(operation: string, input: any) {
-  if (!api.basebox) {
-    // not initialized. Must initialize first
-  }
-
   const managed = api.managed;
 
   switch (operation) {
-      case "create-api-key":
-          const level = input.level as 'organization' | 'project' | undefined;
-          const expiration = input.expiration as string | undefined;
-          const projectId = input.projectId as string | undefined;
+    case "get": {
+      const { data, error } = await managed.organization.get();
+      if (error) throw new Error(`Failed to get organization: ${error.value.message}`);
+      return data;
+    }
 
-          const list = await managed.apiKeys.create({
-              name: input.name,
-              level,
-              expires_at: expiration,
-              project_id: projectId,
-          });
-      return list.items;
+    case "update": {
+      const { data, error } = await managed.organization.update({
+        name: input.name,
+        slug: input.slug,
+        platform_fees: input.platform_fees,
+        payout_fees_bps: input.payout_fees_bps,
+      });
+      if (error) throw new Error(`Failed to update organization: ${error.value.message}`);
+      return data;
+    }
 
-    case "create":
-      const { project } = await managed.projects.create({ name: input.name, slug: input.name.toLowerCase().replace(/\s+/g, '-') });
-      return project;
+    case "delete": {
+      const { data, error } = await managed.organization.delete();
+      if (error) throw new Error(`Failed to delete organization: ${error.value.message}`);
+      return data;
+    }
 
-    case "delete":
-      await managed.projects.delete(input.project);
-      return { success: true };
+    case "create-api-key": {
+      return await api.createApiKey(input);
+    }
 
-    case "select":
-      return api.selectProfile();
+    case "list-keys": {
+      const { data, error } = await managed.apiKeys.list();
+      if (error) throw new Error(`Failed to list API keys: ${error.value.message}`);
+      return data;
+    }
+
+    case "revoke-key": {
+      const { data, error } = await managed.apiKeys.revoke(input.key_id);
+      if (error) throw new Error(`Failed to revoke API key: ${error.value.message}`);
+      return data;
+    }
 
     default:
-      throw new Error(`Unsupported project operation: ${operation}`)
+      throw new Error(`Unsupported organization operation: ${operation}`);
   }
 }

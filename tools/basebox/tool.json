@@ -1,6 +1,6 @@
 {
   "name": "basebox",
-  "description": "Manage Basebox resources.",
+  "description": "Manage Basebox resources — organizations, projects, profiles, API keys, deployments, payments, payout accounts, file storage, and auth sessions.",
   "inputSchema": {
     "type": "object",
     "properties": {
@@ -11,30 +11,203 @@
           "project",
           "deployment",
           "apikey",
-          "file"
+          "file",
+          "profile",
+          "auth"
         ]
       },
       "operation": {
         "type": "string",
         "enum": [
-          "list",
           "get",
+          "list",
           "create",
           "update",
           "delete",
-          "select",
           "deploy",
-          "logs"
+          "select",
+          "add",
+          "remove",
+          "current",
+          "login",
+          "check",
+          "set-session",
+          "clear-session",
+          "get-session",
+          "create-api-key",
+          "list-keys",
+          "revoke-key",
+          "list-profiles",
+          "get-profile",
+          "ban-profile",
+          "unban-profile",
+          "update-role",
+          "delete-profile",
+          "list-payments",
+          "get-payment",
+          "payment-summary",
+          "create-payment",
+          "list-payout-accounts",
+          "set-payout-account",
+          "delete-payout-account",
+          "storage",
+          "upload-url",
+          "list-own",
+          "delete-own"
         ]
       },
-      "organization": {
-        "type": "string"
+      "name": {
+        "type": "string",
+        "description": "Name for the resource (project, API key, profile name, etc.)"
+      },
+      "slug": {
+        "type": "string",
+        "description": "URL-friendly slug for the resource"
       },
       "project": {
-        "type": "string"
+        "type": "string",
+        "description": "Project ID"
       },
-      "data": {
-        "type": "object"
+      "profile_id": {
+        "type": "string",
+        "description": "Profile ID (user within a project)"
+      },
+      "file_id": {
+        "type": "string",
+        "description": "File/asset ID"
+      },
+      "key_id": {
+        "type": "string",
+        "description": "API key ID"
+      },
+      "payment_id": {
+        "type": "string",
+        "description": "Payment ID"
+      },
+      "level": {
+        "type": "string",
+        "enum": ["organization", "project"],
+        "description": "API key scope"
+      },
+      "expiration": {
+        "type": "string",
+        "description": "ISO 8601 expiration date for the API key"
+      },
+      "dist": {
+        "type": "string",
+        "description": "Path to the dist folder to deploy"
+      },
+      "domain": {
+        "type": "string",
+        "description": "Domain to deploy to"
+      },
+      "platform_fees": {
+        "type": "object",
+        "description": "Per-currency platform fees in minor units (cents)"
+      },
+      "payout_fees_bps": {
+        "type": "object",
+        "description": "Per-currency payout fees in basis points"
+      },
+      "organization_id": {
+        "type": "string",
+        "description": "Organization ID (optional — decoded from public_key if not provided)"
+      },
+      "project_id": {
+        "type": "string",
+        "description": "Project ID (optional — decoded from public_key if not provided; required for API key scoping)"
+      },
+      "public_key": {
+        "type": "string",
+        "description": "Basebox public key (bb_anon_...)"
+      },
+      "secret_key": {
+        "type": "string",
+        "description": "Basebox secret API key (bb_secret_...)"
+      },
+      "session_id": {
+        "type": "string",
+        "description": "User session ID for file/auth operations"
+      },
+      "callback_url": {
+        "type": "string",
+        "description": "The redirect URL from a browser OAuth flow (used by `auth callback`)"
+      },
+      "provider": {
+        "type": "string",
+        "enum": ["google", "github", "discord"],
+        "description": "OAuth provider for login"
+      },
+      "amount_cents": {
+        "type": "number",
+        "description": "Amount in minor units (cents) for payment creation"
+      },
+      "metadata": {
+        "type": "object",
+        "description": "Arbitrary metadata for payment creation"
+      },
+      "currency": {
+        "type": "string",
+        "description": "Currency code (BRL, EUR, USD)"
+      },
+      "destination_type": {
+        "type": "string",
+        "enum": ["pix", "iban"],
+        "description": "Payout account destination type"
+      },
+      "destination": {
+        "type": "string",
+        "description": "Payout destination (PIX key or IBAN)"
+      },
+      "pix_key_type": {
+        "type": "string",
+        "enum": ["CPF", "CNPJ", "PHONE", "EMAIL", "RANDOM"],
+        "description": "PIX key type (required when destination_type is pix)"
+      },
+      "role": {
+        "type": "string",
+        "enum": ["user", "admin", "superuser", "owner"],
+        "description": "User role for a project profile"
+      },
+      "status": {
+        "type": "string",
+        "description": "Filter by status (active, banned, or payment status)"
+      },
+      "search": {
+        "type": "string",
+        "description": "Search term for filtering profiles"
+      },
+      "reason": {
+        "type": "string",
+        "description": "Ban reason"
+      },
+      "expires_at": {
+        "type": "string",
+        "description": "ISO 8601 ban expiration date"
+      },
+      "page": {
+        "type": "number",
+        "description": "Page number for paginated results"
+      },
+      "page_size": {
+        "type": "number",
+        "description": "Page size for paginated results"
+      },
+      "filename": {
+        "type": "string",
+        "description": "Filename for file upload"
+      },
+      "content_type": {
+        "type": "string",
+        "description": "MIME type for file upload"
+      },
+      "size": {
+        "type": "number",
+        "description": "File size in bytes for upload"
+      },
+      "type": {
+        "type": "string",
+        "description": "MIME type filter for file listing"
       }
     },
     "required": [

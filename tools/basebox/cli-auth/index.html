@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Basebox CLI Auth</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f0f11;
+      color: #e4e4e7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background: #1a1a1e;
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 480px;
+      width: 90%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    h1 { font-size: 1.25rem; margin-bottom: 0.5rem; }
+    p { color: #a1a1aa; font-size: 0.875rem; margin-bottom: 1.5rem; line-height: 1.5; }
+    .providers { display: flex; flex-direction: column; gap: 0.75rem; }
+    .btn {
+      display: flex; align-items: center; gap: 0.75rem;
+      width: 100%; padding: 0.75rem 1rem;
+      background: #27272a; border: 1px solid #3f3f46;
+      border-radius: 8px; color: #e4e4e7;
+      font-size: 0.9375rem; font-weight: 500;
+      cursor: pointer; transition: background 0.15s;
+      text-align: left;
+    }
+    .btn:hover { background: #3f3f46; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn .icon { font-size: 1.25rem; width: 24px; text-align: center; }
+    #result {
+      margin-top: 1.5rem;
+      display: none;
+    }
+    #result.success { display: block; }
+    #result.error { display: block; }
+    .session-box {
+      background: #09090b; border: 1px solid #27272a;
+      border-radius: 8px; padding: 1rem;
+      margin-top: 1rem;
+      word-break: break-all;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 0.8125rem;
+    }
+    .session-label { font-size: 0.75rem; color: #a1a1aa; margin-bottom: 0.5rem; }
+    .copied-msg { color: #22c55e; font-size: 0.8125rem; margin-top: 0.5rem; display: none; }
+    .copied-msg.show { display: block; }
+    .error-msg { color: #ef4444; font-size: 0.875rem; margin-top: 0.75rem; }
+    .copy-btn {
+      margin-top: 0.75rem;
+      padding: 0.5rem 1rem;
+      background: #22c55e; color: #09090b;
+      border: none; border-radius: 6px;
+      font-weight: 600; font-size: 0.8125rem;
+      cursor: pointer;
+    }
+    .copy-btn:hover { background: #16a34a; }
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #52525b; border-top-color: #e4e4e7; border-radius: 50%; animation: spin 0.6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading { display: flex; align-items: center; gap: 0.5rem; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Basebox CLI Authentication</h1>
+    <p>Sign in with one of the providers below. After a successful login, your session ID will appear — copy it and paste it back into the CLI tool.</p>
+
+    <div class="providers" id="providers">
+      <button class="btn" data-provider="google">
+        <span class="icon">G</span> Sign in with Google
+      </button>
+      <button class="btn" data-provider="github">
+        <span class="icon">&#xE612;</span> Sign in with GitHub
+      </button>
+      <button class="btn" data-provider="discord">
+        <span class="icon">&#xE60E;</span> Sign in with Discord
+      </button>
+    </div>
+
+    <div id="result">
+      <div id="loading" class="loading" style="display:none">
+        <span class="spinner"></span>
+        <span>Completing sign in...</span>
+      </div>
+      <div id="error" class="error-msg"></div>
+      <div id="success" style="display:none">
+        <p style="color:#22c55e;font-weight:600;margin-bottom:0.25rem;">&#10003; Authenticated!</p>
+        <div class="session-label">Your session ID (copy this):</div>
+        <div class="session-box" id="sessionDisplay"></div>
+        <button class="copy-btn" id="copyBtn">Copy to clipboard</button>
+        <div class="copied-msg" id="copiedMsg">Copied!</div>
+      </div>
+    </div>
+  </div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "@moureau/basebox": "https://esm.sh/@moureau/basebox@0.0.36"
+    }
+  }
+  </script>
+  <script type="module">
+    import { Basebox } from "@moureau/basebox";
+
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      const publicKey = params.get("publicKey") || params.get("pk");
+      const provider = params.get("provider");
+
+      if (!publicKey) {
+        document.getElementById("providers").style.display = "none";
+        document.getElementById("result").style.display = "block";
+        document.getElementById("error").textContent =
+          "Missing public key. This page should be opened from the Basebox CLI tool.";
+        return;
+      }
+
+      const bb = new Basebox({ publicKey });
+
+      const providersEl = document.getElementById("providers");
+      const resultEl = document.getElementById("result");
+      const loadingEl = document.getElementById("loading");
+      const errorEl = document.getElementById("error");
+      const successEl = document.getElementById("success");
+      const sessionDisplay = document.getElementById("sessionDisplay");
+      const copyBtn = document.getElementById("copyBtn");
+      const copiedMsg = document.getElementById("copiedMsg");
+
+      function showError(msg) {
+        providersEl.style.display = "none";
+        resultEl.className = "error";
+        loadingEl.style.display = "none";
+        errorEl.textContent = msg;
+        successEl.style.display = "none";
+      }
+
+      function showSession(sessionId) {
+        providersEl.style.display = "none";
+        resultEl.className = "success";
+        loadingEl.style.display = "none";
+        errorEl.style.display = "none";
+        successEl.style.display = "block";
+        sessionDisplay.textContent = sessionId;
+        try { window.location.hash = sessionId; } catch {}
+      }
+
+      async function signIn(p, btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Signing in...';
+        try {
+          const { sessionId } = await bb.public().auth.oauth2.initiate(p);
+          showSession(sessionId);
+        } catch (e) {
+          showError(e?.message ?? 'Sign in failed. Please try again.');
+          btn.disabled = false;
+          btn.innerHTML = "Sign in with " + p.charAt(0).toUpperCase() + p.slice(1);
+        }
+      }
+
+      if (provider && ["google", "github", "discord"].includes(provider)) {
+        const name = provider.charAt(0).toUpperCase() + provider.slice(1);
+        providersEl.innerHTML = `<button class="btn" id="single-btn"><span class="icon">${provider === "google" ? "G" : provider === "github" ? "&#xE612;" : "&#xE60E;"}</span> Sign in with ${name}</button>`;
+        document.getElementById("single-btn").addEventListener("click", () => signIn(provider, document.getElementById("single-btn")));
+      }
+
+      document.querySelectorAll("[data-provider]").forEach((btn) => {
+        btn.addEventListener("click", () => signIn(btn.dataset.provider, btn));
+      });
+
+      copyBtn.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(sessionDisplay.textContent);
+          copiedMsg.classList.add("show");
+          setTimeout(() => copiedMsg.classList.remove("show"), 2000);
+        } catch {
+          const range = document.createRange();
+          range.selectNodeContents(sessionDisplay);
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
