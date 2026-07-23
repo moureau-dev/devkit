@@ -1,22 +1,66 @@
 ---
 description: Manage Basebox resources.
-argument-hint: "<resource> <operation> [arguments...]"
+argument-hint: "see resource operations below"
 ---
 
 # Basebox
 
-Manage Basebox resources using the `basebox` tool.
+Manage Basebox resources using the basebox CLI.
 
-Always invoke the tool instead of generating HTTP requests or shell commands manually.
+## Invocation
 
-## Resources
+Pipe JSON to `bun run ~/.moureau/tools/basebox/tool.ts`:
 
-- `auth`
-- `profile`
-- `organization`
-- `project`
-- `deployment`
-- `file`
+```bash
+echo '{"resource":"<resource>","operation":"<op>","param1":"val1",...}' | bun run ~/.moureau/tools/basebox/tool.ts
+```
+
+**Read `~/.moureau/tools/basebox/tool.json` to see all available parameters for each operation.** The tool only requires `resource` and `operation` as mandatory — everything else is optional and depends on the operation.
+
+Do NOT generate HTTP requests or shell commands manually — always invoke the tool.
+
+## Standard Flows
+
+### Authentication
+
+1. Call `auth login` to get a sign-in URL (default provider: `google`).
+2. User opens the URL in browser, signs in, and gets a session ID (includes the `sess:` prefix).
+3. Call `auth set-session` with `session_id` (keep the `sess:` prefix).
+4. Validate with `auth check`.
+
+### File Upload
+
+1. Ensure an authenticated session is stored (see Authentication flow).
+2. Call `file upload-url` with `filename`, `content_type`, and `size` (in bytes).
+3. It returns `uploadUrl` (presigned S3 URL) and `publicUrl`.
+4. Upload the file: `curl -X PUT -T <path> "<uploadUrl>"`
+5. Report the `publicUrl`.
+
+### Deployment
+
+Before deploying:
+
+1. Verify the target project exists.
+2. Verify the target domain.
+3. Verify the build directory exists.
+4. Summarize what will be deployed.
+5. If deploying to production, ask for confirmation first.
+
+Then call `deployment deploy` with `dist` and `domain`.
+
+After deployment, report the deployment URL and any build output returned.
+
+## Resources & Operations
+
+| Resource | Operations |
+|----------|-----------|
+| `auth` | `login`, `set-session`, `check`, `clear-session`, `get-session` |
+| `profile` | `current`, `get`, `list`, `ban-profile`, `unban-profile`, `update-role`, `delete-profile` |
+| `project` | `list`, `get`, `create`, `update`, `delete`, `add` member, `remove` member, `list-payments`, `get-payment`, `payment-summary`, `create-payment`, `list-payout-accounts`, `set-payout-account`, `delete-payout-account` |
+| `deployment` | `deploy`, `list`, `get` |
+| `file` | `upload-url`, `list`, `list-own`, `delete`, `delete-own`, `storage` |
+| `organization` | `get`, `update`, `create-api-key`, `list-keys`, `revoke-key` |
+| `apikey` | `create`, `list`, `revoke` |
 
 ## General Rules
 
@@ -27,50 +71,3 @@ Always invoke the tool instead of generating HTTP requests or shell commands man
 - Present created resources with their identifiers.
 - Never display secret API keys after creation unless explicitly requested.
 - Never expose stored session IDs unless the user explicitly requests them.
-
-## Authentication
-
-Support login, session management, and validation.
-
-Default OAuth provider is `google`.
-
-## Profiles
-
-Profiles store Basebox credentials.
-
-Unless instructed otherwise, operate on the currently selected profile.
-
-## Organizations
-
-Manage organization settings and API keys.
-
-Deleting an organization requires explicit confirmation.
-
-## Projects
-
-Manage projects, members, payments, payout accounts, and deployments.
-
-Deleting a project requires explicit confirmation.
-
-## Files
-
-File operations require a valid authenticated session.
-
-Uploads should:
-
-1. Request an upload URL.
-2. Upload the file.
-3. Report the resulting file information.
-
-## Deployments
-
-Before deploying:
-
-- verify the target project
-- verify the target domain
-- verify the build directory exists
-- summarize what will be deployed
-
-If deploying to production, ask for confirmation first.
-
-After deployment, report the deployment URL and any build output returned by the tool.
