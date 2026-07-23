@@ -74,6 +74,9 @@ export async function auth(operation: string, input: any) {
     }
 
     default:
-      throw new Error(`Unsupported auth operation: ${operation}`);
+      throw new Error(
+        `Unsupported auth operation: "${operation}". ` +
+        `Available: login (get sign-in URL for user), set-session (store session ID from user), check (validate session), clear-session, get-session.`
+      );
   }
 }

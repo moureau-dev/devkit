@@ -76,6 +76,10 @@ export async function file(operation: string, input: any) {
     }
 
     default:
-      throw new Error(`Unsupported file operation: ${operation}`);
+      throw new Error(
+        `Unsupported file operation: "${operation}". ` +
+        `Available: upload-url (get presigned URL), list, list-own, delete, delete-own, storage. ` +
+        `For upload-url you need filename, content_type (MIME), and size (bytes).`
+      );
   }
 }
