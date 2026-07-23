@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION="0.2.0"
+VERSION="0.3.0"
 INSTALL_DIR="$HOME/.local/bin"
 CLI_NAME="moureau"
 DEVKIT_DIR="$HOME/.moureau"
@@ -51,13 +51,7 @@ do_sync() {
   blue_print "[⋯] syncing devkit..."
 
   if [ -d "\$DEVKIT_DIR" ]; then
-    # Stash any local changes so pull doesn't fail
-    (cd "\$DEVKIT_DIR" && git stash --include-untracked 2>/dev/null || true)
-    if ! git -C "\$DEVKIT_DIR" pull --ff-only; then
-      red_print "[✗] git pull failed. Your devkit has uncommitted changes that conflict."
-      red_print "    Commit or stash them in \$DEVKIT_DIR, then retry."
-      return 1
-    fi
+    git -C "\$DEVKIT_DIR" pull --ff-only
   else
     git clone --depth 1 "\$DEVKIT_REPO" "\$DEVKIT_DIR"
   fi
