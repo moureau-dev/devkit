@@ -18,22 +18,26 @@ export function runTool(args: Record<string, unknown>): Promise<string> {
       if (typeof Bun !== "undefined") return "bun"
       if (typeof Deno !== "undefined") return "deno"
       if (process.env.NODE) return "node"
-      reject(new Error("No JavaScript environment found."))
       return ""
     })()
+    if (!command) reject(new Error("No JavaScript environment found."))
 
     const args = (() => {
       if (command === "bun") return ["run", executable]
       if (command === "deno") return ["run", "--allow-read", "--allow-write", executable]
       if (command === "node") return ["npx tsx", executable]
-      reject(new Error("No JavaScript environment found."))
       return []
     })()
+    if (!args.length) reject(new Error("No JavaScript environment found."))
 
     const child = spawn(command, args, {
       stdio: ["pipe", "pipe", "pipe"],
     })
+
     let stdout = ""
+    let stderr = ""
+
+    child.stderr!.on("data", (chunk: Buffer) => { stderr += chunk.toString() })
     child.stdout!.on("data", (chunk: Buffer) => { stdout += chunk.toString() })
     child.on("error", reject)
     child.on("close", (code) => {
