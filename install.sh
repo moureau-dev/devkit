@@ -25,9 +25,10 @@ blue_print "[⋯] installing $CLI_NAME..."
 mkdir -p "$INSTALL_DIR"
 
 # ----------------------------
-# INSTALL CLI
+# INSTALL CLI (write to temp, then rename atomically to avoid Text file busy)
 # ----------------------------
-cat > "$INSTALL_DIR/$CLI_NAME" <<OUTER
+TMPFILE="$(mktemp)"
+cat > "$TMPFILE" <<OUTER
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -50,7 +51,13 @@ do_sync() {
   blue_print "[⋯] syncing devkit..."
 
   if [ -d "\$DEVKIT_DIR" ]; then
-    git -C "\$DEVKIT_DIR" pull --ff-only
+    # Stash any local changes so pull doesn't fail
+    (cd "\$DEVKIT_DIR" && git stash --include-untracked 2>/dev/null || true)
+    if ! git -C "\$DEVKIT_DIR" pull --ff-only; then
+      red_print "[✗] git pull failed. Your devkit has uncommitted changes that conflict."
+      red_print "    Commit or stash them in \$DEVKIT_DIR, then retry."
+      return 1
+    fi
   else
     git clone --depth 1 "\$DEVKIT_REPO" "\$DEVKIT_DIR"
   fi
@@ -219,7 +226,11 @@ main "\$@"
 exit
 OUTER
 
+# Atomically move into place so running `moureau update` doesn't hit Text file busy
+mv -f "$TMPFILE" "$INSTALL_DIR/$CLI_NAME"
 chmod +x "$INSTALL_DIR/$CLI_NAME"
+
+rm -f "$TMPFILE"
 
 # ----------------------------
 # PATH SETUP
