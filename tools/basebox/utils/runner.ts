@@ -22,15 +22,15 @@ export function runTool(args: Record<string, unknown>): Promise<string> {
     })()
     if (!command) reject(new Error("No JavaScript environment found."))
 
-    const args = (() => {
+    const cmdArgs = (() => {
       if (command === "bun") return ["run", executable]
       if (command === "deno") return ["run", "--allow-read", "--allow-write", executable]
       if (command === "node") return ["npx tsx", executable]
       return []
     })()
-    if (!args.length) reject(new Error("No JavaScript environment found."))
+    if (!cmdArgs.length) reject(new Error("No JavaScript environment found."))
 
-    const child = spawn(command, args, {
+    const child = spawn(command, cmdArgs, {
       stdio: ["pipe", "pipe", "pipe"],
     })
 
