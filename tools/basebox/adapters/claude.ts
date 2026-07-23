@@ -1,10 +1,22 @@
 import { tool, createSdkMcpServer } from "@anthropic-ai/claude-agent-sdk"
 import { z } from "zod"
-import { execSync } from "child_process"
 import { join } from "path"
 
 const DEVKIT = join(process.env.HOME!, ".moureau")
 const executable = join(DEVKIT, "tools/basebox/tool.ts")
+
+async function run(args: Record<string, unknown>): Promise<string> {
+  const proc = Bun.spawn(["bun", "run", executable], {
+    stdin: "pipe",
+    stdout: "pipe",
+    stderr: "inherit",
+  })
+  proc.stdin.write(JSON.stringify(args))
+  proc.stdin.end()
+  const output = await new Response(proc.stdout).text()
+  await proc.exited
+  return output.trim()
+}
 
 const baseboxTool = tool(
   "basebox",
@@ -74,9 +86,8 @@ const baseboxTool = tool(
     public_key: z.string().optional().describe("Basebox public key (bb_anon_...)"),
     secret_key: z.string().optional().describe("Basebox secret key (bb_secret_...)"),
   },
-  (args) => {
-    const input = JSON.stringify(args)
-    const result = execSync(`echo '${input}' | bun run "${executable}"`, { encoding: "utf8" }).trim()
+  async (args) => {
+    const result = await run(args as unknown as Record<string, unknown>)
     return { content: [{ type: "text", text: result }] }
   },
 )

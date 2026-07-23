@@ -1,15 +1,22 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent"
 import { Type } from "typebox"
 import { StringEnum } from "@earendil-works/pi-ai"
-import { execSync } from "node:child_process"
 import { join } from "node:path"
 
 const DEVKIT = join(process.env.HOME!, ".moureau")
 const executable = join(DEVKIT, "tools/basebox/tool.ts")
 
-function execute(args: Record<string, unknown>): string {
-  const input = JSON.stringify(args)
-  return execSync(`echo '${input}' | bun run "${executable}"`, { encoding: "utf8" }).trim()
+async function execute(args: Record<string, unknown>): Promise<string> {
+  const proc = Bun.spawn(["bun", "run", executable], {
+    stdin: "pipe",
+    stdout: "pipe",
+    stderr: "inherit",
+  })
+  proc.stdin.write(JSON.stringify(args))
+  proc.stdin.end()
+  const output = await new Response(proc.stdout).text()
+  await proc.exited
+  return output.trim()
 }
 
 export default function (pi: ExtensionAPI) {
@@ -78,7 +85,7 @@ export default function (pi: ExtensionAPI) {
       type: Type.Optional(Type.String()),
     }),
     async execute(_toolCallId, params, _signal, _onUpdate, _ctx) {
-      const result = execute(params as unknown as Record<string, unknown>)
+      const result = await execute(params as unknown as Record<string, unknown>)
       return {
         content: [{ type: "text", text: result }],
         details: {},
