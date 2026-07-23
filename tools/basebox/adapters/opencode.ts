@@ -1,26 +1,5 @@
 import { tool } from "@opencode-ai/plugin"
-import { join } from "path"
-
-const DEVKIT = join(process.env.HOME!, ".moureau")
-const executable = join(DEVKIT, "tools/basebox/tool.ts")
-
-/**
- * All parameters are passed to the underlying tool via stdin JSON.
- * The tool reads all keys from the JSON object — resource, operation,
- * and any extras like session_id, filename, content_type, size, etc.
- */
-async function run(args: Record<string, unknown>): Promise<string> {
-  const proc = Bun.spawn(["bun", "run", executable], {
-    stdin: "pipe",
-    stdout: "pipe",
-    stderr: "inherit",
-  })
-  proc.stdin.write(JSON.stringify(args))
-  proc.stdin.end()
-  const output = await new Response(proc.stdout).text()
-  await proc.exited
-  return output.trim()
-}
+import { runTool } from "../utils/runner"
 
 export default tool({
   description: [
@@ -117,7 +96,7 @@ export default tool({
       .describe("Basebox secret key (bb_secret_...) for managed API operations"),
   },
   async execute(args) {
-    const result = await run(args as unknown as Record<string, unknown>)
+    const result = await runTool(args as unknown as Record<string, unknown>)
 
     // Try to parse JSON result for structured output
     try {
