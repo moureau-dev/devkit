@@ -89,11 +89,12 @@ do_sync() {
 
   # --- tools ---
   # Symlinks the raw tool dir (tool.ts + tool.json + resources/) into each agent,
-  # then symlinks the adapter .ts files so the agent can discover and load them.
+  # then generates adapter re-export files so each agent can discover and load them.
 
   # --- symlink raw tool dir so tool.ts + tool.json + resources/ are accessible ---
+  # pi is excluded: it reads extensions/ only since the tools/ migration, and its
+  # adapter spawns tool.ts from $DEVKIT_DIR directly, so the raw dir is unused.
   TOOL_DIRS=(
-    "\$HOME/.pi/agent/tools"
     "\$HOME/.claude/tools"
     "\$HOME/.config/opencode/tools"
   )
@@ -112,18 +113,30 @@ do_sync() {
   # --- tool adapters (import from devkit, so updates flow automatically) ---
   # Each generated file is just an import + re-export of the devkit's adapter.
   # No inline logic — run \`moureau sync\` to refresh after devkit updates.
+  # Generated as real files (not symlinks): loaders like pi's resolve relative
+  # imports from the file's own directory, which breaks symlinked adapters.
 
   # OpenCode: expects flat .ts files in tools/
   mkdir -p "\$HOME/.config/opencode/tools"
-  ln -sf "\$DEVKIT_DIR/tools/basebox/adapters/opencode.ts" "\$HOME/.config/opencode/tools/basebox.ts"
+  rm -f "\$HOME/.config/opencode/tools/basebox.ts"
+  cat > "\$HOME/.config/opencode/tools/basebox.ts" <<EOF
+export { default } from "\$DEVKIT_DIR/tools/basebox/adapters/opencode.ts"
+EOF
 
-  # pi: extension file
+  # pi: extension file (legacy tools/ symlink removed; dir left alone for fd/rg binaries)
+  [ -L "\$HOME/.pi/agent/tools/basebox" ] && rm -f "\$HOME/.pi/agent/tools/basebox"
   mkdir -p "\$HOME/.pi/agent/extensions"
-  ln -sf "\$DEVKIT_DIR/tools/basebox/adapters/pi.ts" "\$HOME/.pi/agent/extensions/basebox.ts"
+  rm -f "\$HOME/.pi/agent/extensions/basebox.ts"
+  cat > "\$HOME/.pi/agent/extensions/basebox.ts" <<EOF
+export { default } from "\$DEVKIT_DIR/tools/basebox/adapters/pi.ts"
+EOF
 
   # claude: tool file (imported by claude-code config or MCP)
   mkdir -p "\$HOME/.claude/tools"
-  ln -sf "\$DEVKIT_DIR/tools/basebox/adapters/claude.ts" "\$HOME/.claude/tools/basebox.ts"
+  rm -f "\$HOME/.claude/tools/basebox.ts"
+  cat > "\$HOME/.claude/tools/basebox.ts" <<EOF
+export { baseboxServer } from "\$DEVKIT_DIR/tools/basebox/adapters/claude.ts"
+EOF
 
   green_print "[✓] devkit synced (\$DEVKIT_DIR)"
   green_print "[✓] skills, commands, and tools installed"
