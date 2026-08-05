@@ -51,8 +51,14 @@ do_sync() {
   blue_print "[⋯] syncing devkit..."
 
   if [ -d "\$DEVKIT_DIR" ]; then
-    git -C "\$DEVKIT_DIR" pull --ff-only
+    blue_print "[⋯] pulling latest devkit..."
+    (cd "\$DEVKIT_DIR" && git stash push -m "moureau sync \$(date +%Y-%m-%d_%H:%M:%S)" --include-untracked 2>/dev/null || true)
+    if ! git -C "\$DEVKIT_DIR" pull --ff-only; then
+      red_print "[✗] git pull failed. Check \$DEVKIT_DIR for conflicts."
+      return 1
+    fi
   else
+    blue_print "[⋯] cloning devkit..."
     git clone --depth 1 "\$DEVKIT_REPO" "\$DEVKIT_DIR"
   fi
 
@@ -105,7 +111,7 @@ do_sync() {
 
   # --- tool adapters (import from devkit, so updates flow automatically) ---
   # Each generated file is just an import + re-export of the devkit's adapter.
-  # No inline logic — run `moureau sync` to refresh after devkit updates.
+  # No inline logic — run \`moureau sync\` to refresh after devkit updates.
 
   # OpenCode: expects flat .ts files in tools/
   mkdir -p "\$HOME/.config/opencode/tools"
@@ -126,22 +132,15 @@ do_sync() {
 do_update() {
   blue_print "[⋯] updating moureau..."
 
-  tmp=\$(mktemp)
-
-  if ! curl -fsSL "\$INSTALLER_URL" -o "\$tmp"; then
-    rm -f "\$tmp"
-    red_print "[✗] failed to download installer"
-    return 1
+  # Pull latest devkit
+  if [ -d "\$DEVKIT_DIR" ]; then
+    (cd "\$DEVKIT_DIR" && git stash push -m "moureau update \$(date +%Y-%m-%d_%H:%M:%S)" --include-untracked 2>/dev/null || true)
+    git -C "\$DEVKIT_DIR" pull --ff-only 2>/dev/null || true
   fi
 
-  if bash "\$tmp" >/dev/null; then
-    rm -f "\$tmp"
-    green_print "[✓] updated"
-  else
-    rm -f "\$tmp"
-    red_print "[✗] update failed"
-    return 1
-  fi
+  # Reinstall from the devkit's install.sh
+  bash "\$DEVKIT_DIR/install.sh" 2>&1 | grep -v "fatal:\|destination path" || true
+  green_print "[✓] updated"
 }
 
 do_uninstall() {
