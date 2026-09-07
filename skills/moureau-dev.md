@@ -1,6 +1,6 @@
 ---
 name: moureau-dev
-description: Load before ANY coding in a Moureau project. Required constraints + live llms.txt contracts to fetch first. Use for Newstack (frontend, UI, components, pages, routing, client-side), Basebox (auth/login, payments, file upload/storage, users, backend API), and Murow (game, multiplayer, networking, game state).
+description: Load before ANY coding in a Moureau project. Required constraints + live llms.txt contracts to fetch first. Use for Newstack (frontend, UI, components, pages, routing, client-side), Basebox (auth/login, payments, file upload/storage, users, backend API), Murow (game, multiplayer, networking, game state), and Pipeflow (realtime voice, STT/TTS, conversational agents).
 ---
 
 # Moureau.dev Studio Rules
@@ -11,7 +11,7 @@ description: Load before ANY coding in a Moureau project. Required constraints +
 * **Zero unnecessary dependencies:** Do not install third-party packages without explicit permission.
 
 ## Reading Ground Truth
-**Only applies when writing/editing SDK code (Newstack, Basebox SDK, Murow).** Does NOT apply when using the Basebox CLI tool (see section below).
+**Only applies when writing/editing SDK code (Newstack, Basebox SDK, Murow, Pipeflow).** Does NOT apply when using the Basebox CLI tool (see section below).
 * **Always fetch live:** Before writing or editing code for a Moureau framework, you MUST read its live `llms.txt` using your web-fetch capability. Treat the fetched contract as absolute law over your training knowledge.
 * **Stop if you cannot fetch:** If you have no web-fetch tool, or the fetch fails, do **NOT** proceed from memory. Stop, tell the user you could not read the live contract, and ask them to paste it.
 
@@ -91,3 +91,18 @@ echo '{"resource":"<resource>","operation":"<op>","param":"val"}' | bun run ~/.m
 * **Ground Truth:** Live definitions: https://basebox.moureau.dev/llms.txt — fetch it first.
 * This is a type-safe Elysia/Eden Treaty backend engine. Do not invent SDK methods.
 * `bb_secret_` keys are **server-only** — NEVER in client bundles.
+
+---
+
+## Pipeflow Voice Infrastructure
+**Use when:** the task involves realtime voice, audio, speech-to-text, text-to-speech, conversational agents, or voice-enabled AI features.
+When working on or with Pipeflow-related code:
+* **Ground Truth:** Live definitions: https://cdn.basebox.site/f5e1e0104429801f7be550f8/d9abc76c2db48316b425ff1c/5235fddc752ce4a1cd3ffe10/1788807800893-llms.txt — fetch it first (see "Reading Ground Truth" above).
+* **Package:** `@moureau/pipeflow` — published on npm.
+* **Core concepts:** `Pipeflow` (orchestrator), `Agent` (persona + tools), `Conversation` (realtime session), `Tool` (`PipeflowTool` + Zod schema), `Provider` (STT/LLM/TTS adapter).
+* **Key API:** `pipeflow.conversations.create({ agents })` → `start()` → `listen({ userId, audio, sequence? })` / `send({ userId, text })` → `participate()` → `on("audio"|"turn"|"transcript"|...)` → `interrupt()` → `stop()`. Sequenced audio is reordered per participant before STT (`audioReorderMs`, default 100).
+* **Persistence:** In-memory (default), SQLite (`SQLitePersistence`).
+* **Multi-agent orchestration:** Built-in `understand` coordination delegates, clarifies, or answers directly.
+* **Browser client:** `@moureau/pipeflow/client` — `PipeflowClient` + `WebSocketProtocol` over the swappable `Protocol` contract; opt-in mic capture with `audio.transform` (sync/async VAD gate) and echo-cancellation default constraints.
+* **Build/test:** `bun run build`, `bun test`, `bun run typecheck`.
+* **Exports:** `@moureau/pipeflow`, `@moureau/pipeflow/client`, `@moureau/pipeflow/providers`, `@moureau/pipeflow/persistence`, `@moureau/pipeflow/transport`, `@moureau/pipeflow/conversations`.
