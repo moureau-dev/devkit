@@ -9,6 +9,7 @@ description: Load before ANY coding in a Moureau project. Required constraints +
 * **Prefer minimal diffs:** Keep code changes tightly focused; do not refactor unrelated code.
 * **Preserve architecture:** Follow existing project conventions and keep changes reversible.
 * **Zero unnecessary dependencies:** Do not install third-party packages without explicit permission.
+* **NEVER stage widely (git add -A, git add .):** Always stage specific files by path. Always run `git diff --cached` to review before committing.
 
 ## Reading Ground Truth
 **Only applies when writing/editing SDK code (Newstack, Basebox SDK, Murow, Pipeflow).** Does NOT apply when using the Basebox CLI tool (see section below).
