@@ -98,7 +98,7 @@ echo '{"resource":"<resource>","operation":"<op>","param":"val"}' | bun run ~/.m
 ## Pipeflow Voice Infrastructure
 **Use when:** the task involves realtime voice, audio, speech-to-text, text-to-speech, conversational agents, or voice-enabled AI features.
 When working on or with Pipeflow-related code:
-* **Ground Truth:** Live definitions: https://cdn.basebox.site/f5e1e0104429801f7be550f8/d9abc76c2db48316b425ff1c/5235fddc752ce4a1cd3ffe10/1789045760689-llms.txt — fetch it first (see "Reading Ground Truth" above).
+* **Ground Truth:** Live definitions: https://cdn.basebox.site/f5e1e0104429801f7be550f8/d9abc76c2db48316b425ff1c/5235fddc752ce4a1cd3ffe10/1789168311205-llms.txt — fetch it first (see "Reading Ground Truth" above).
 * **Package:** `@moureau/pipeflow` — published on npm.
 * **Core concepts:** `Pipeflow` (orchestrator), `Agent` (persona + tools), `Conversation` (realtime session), `Tool` (`PipeflowTool` + Zod schema), `Provider` (STT/LLM/TTS adapter).
 * **Key API:** `pipeflow.conversations.create({ agents })` → `start()` → `listen({ userId, audio, sequence? })` / `send({ userId, text })` → `participate()` → `on("audio"|"turn"|"transcript"|...)` → `interrupt()` → `stop()`. Sequenced audio is reordered per participant before STT (`audioReorderMs`, default 100).
