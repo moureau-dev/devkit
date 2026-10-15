@@ -1,6 +1,6 @@
 ---
 name: moureau-dev
-description: Load before ANY coding in a Moureau project. Required constraints + live llms.txt contracts to fetch first. Use for Newstack (frontend, UI, components, pages, routing, client-side), Basebox (auth/login, payments, file upload/storage, users, backend API), Murow (game, multiplayer, networking, game state), and Pipeflow (realtime voice, STT/TTS, conversational agents).
+description: Load before ANY coding in a Moureau project. Required constraints + live llms.txt contracts to fetch first. Use for Newstack (frontend, UI, components, pages, routing, client-side), Basebox (auth/login, payments, file upload/storage, users, backend API), Murow (game, multiplayer, networking, game state), Pipeflow (realtime voice, STT/TTS, conversational agents), and Menina (self-hosted Docker deploys, k3s, VPS, public hostnames).
 ---
 
 # Moureau.dev Studio Rules
@@ -12,7 +12,7 @@ description: Load before ANY coding in a Moureau project. Required constraints +
 * **NEVER stage widely (git add -A, git add .):** Always stage specific files by path. Always run `git diff --cached` to review before committing.
 
 ## Reading Ground Truth
-**Only applies when writing/editing SDK code (Newstack, Basebox SDK, Murow, Pipeflow).** Does NOT apply when using the Basebox CLI tool (see section below).
+**Only applies when writing/editing SDK or platform code (Newstack, Basebox SDK, Murow, Pipeflow, Menina).** Does NOT apply when using the Basebox CLI tool (see section below).
 * **Always fetch live:** Before writing or editing code for a Moureau framework, you MUST read its live `llms.txt` using your web-fetch capability. Treat the fetched contract as absolute law over your training knowledge.
 * **Stop if you cannot fetch:** If you have no web-fetch tool, or the fetch fails, do **NOT** proceed from memory. Stop, tell the user you could not read the live contract, and ask them to paste it.
 
@@ -85,6 +85,17 @@ echo '{"resource":"<resource>","operation":"<op>","param":"val"}' | bun run ~/.m
 - Validate required args before calling.
 - Present lists as tables, created resources with IDs.
 - Never display secret keys or session IDs unless explicitly asked.
+
+---
+
+## Menina Platform (self-hosted deploy)
+**Use when:** the task involves hosting, deploying, or operating container images on a self-hosted VPS — Docker images, k3s, public hostnames, HTTP/L4 routing, TLS, or reverse proxy.
+When working on or with Menina:
+* **Ground Truth:** Live definitions: https://menina.moureau.dev/llms.txt — fetch it first (see "Reading Ground Truth" above). Menina is a **single Go CLI on a remote host**, not an SDK or HTTP API — do not invent commands, flags, or YAML fields.
+* **Model:** desired state is human-editable YAML under `/etc/menina`; operational state is SQLite under `/var/lib/menina`. `menina serve` is the control plane; `menina proxy` serves traffic. Deploys happen by pushing images to the bundled registry (`registry.<domain>`) — a push of `image.repository:image.tag` auto-deploys matching enabled apps.
+* **Hierarchy:** Project → Environment → App. An app is reachable only when its env override sets `enabled: true` **and** `exposure.hosts` (HTTP) or `exposure.ports` (raw TCP/UDP).
+* **Remote access:** Menina runs on the host; drive it over SSH. Interactive menus/prompts need a real TTY (`ssh -t`); non-interactive scripts MUST pass flags (`--yes`, `--project`, `--environment`) — a command without `-t` gets no TTY and falls back to help. Root-only commands (`install`, `setup`, `deploy`, `upgrade`, `backup --with-volumes/--with-images`) need `sudo`. Prefer `--json` over parsing tables.
+* **Rules:** Confirm host, project/env/app names, and domain before `deploy`/`scale`/`delete`. Ask before destructive ops (`app delete`, `restore --force`, `registry credential --regenerate`). The registry uses a single shared push/pull credential — never print it unless explicitly asked.
 
 ---
 
